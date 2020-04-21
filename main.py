@@ -192,7 +192,7 @@ async def sayas(ctx):
     username = user.name
     msg = ctx.message.content.split()
     tosend = ' '.join(msg[2::])
-    cmd = 'curl -d "username={}&content={}&avatar_url={}" -X POST https://discordapp.com/api/webhooks/700876797767712778/FT6Db6_B7ALqPgW3jg6-xPw__jZMIB1C-jzhqITbH_bh1rGGiJ1dtsRHjQ6Mr1Ththpz'.format(username,tosend, pfp)
+    cmd = 'curl -d "username={}&content={}&avatar_url={}" -X POST webhookurl'.format(username,tosend, pfp)
     os.system(cmd)
     await ctx.message.delete()
 
