@@ -1,9 +1,9 @@
-import discord, asyncio, json, typing, urllib, re, os, random, requests, discord.utils
+import discord, asyncio, json, typing, urllib, re, os, random, requests, discord.utils, aiohttp, json
 from googletrans import Translator
 from discord.utils import get
 from discord.ext import commands
 from bs4 import BeautifulSoup, SoupStrainer
-
+from db_work.db_modules import addwarning, getwarnings
 
 
 config = dict()
@@ -13,6 +13,10 @@ bot = commands.Bot(command_prefix=prefix)
 translator = Translator()
 lastdel = None
 lastauth = None
+lasteditto = None
+editauth = None
+lasteditbef = None
+
 try:
     with open ('data/config.json') as con_file:
         config = json.load(con_file)
@@ -22,7 +26,18 @@ except:
 
 @bot.event
 async def on_ready():
+    activity = discord.Activity(name='the kinkiest shit you can imagine', type=discord.ActivityType.watching)
+    await bot.change_presence(activity=activity)
     print("Bot presence t u r n e d on ( ͡° ͜ʖ ͡°)")
+
+@bot.event
+async def on_message_edit(before,after):
+    global lasteditto
+    global lasteditbef
+    global editauth
+    lasteditbef = before.content
+    lasteditto = after.content
+    editauth = before.author.name
 
 
 @bot.event
@@ -93,6 +108,17 @@ async def on_message(message):
         await message.channel.send('You have been muted for trying to mention over 3 people, if this is an error pls message a mod or admin')
         role = get(message.guild.roles, name='Muted')
         await message.author.add_roles(role)
+    if message.channel.id == 695003080487469076:
+        msg = message.content
+        if msg[0:11].lower() != 'looking for':
+            await message.author.send('Your message in looking for should begin with looking for, here is the message you sent: ' + str(msg))
+            await message.delete()
+    if message.channel.id == 702293515933057114:
+        msg = message.content
+        if msg[0:10].lower() != 'story time':
+
+            await message.author.send('Your message in story time for should begin with story time, here is the message you sent: ' + str(msg))
+            await message.delete()
     await bot.process_commands(message)
 
 @bot.event
@@ -131,16 +157,30 @@ async def hello_world(ctx):
     await ctx.message.channel.send('Hey there ' + str(ctx.message.author))
 
 @bot.command()
-@commands.has_permissions(administrator=True)
-async def ban(ctx, member: discord.Member = None):
-    bangifs = ['https://giphy.com/gifs/ban-banned-salt-bae-Vh2c84FAPVyvvjZJNM','https://giphy.com/gifs/trump-ban-LPHbzPcICc86EVte9C','https://giphy.com/gifs/hammer-super-mario-8-bit-qPD4yGsrc0pdm','https://giphy.com/gifs/H99r2HtnYs492','https://giphy.com/gifs/ban-HXcALJVPgaR4A','https://giphy.com/gifs/dvOwFmfbzmAsI9v2IV','https://giphy.com/gifs/ii-topic-diablo-1zFXgNa44Z904','https://giphy.com/gifs/CybZqG4etuZsA','https://giphy.com/gifs/banned-Qn0LMesNcMHKg']
-    if not member:
-        await ctx.send('Please specify a member to ban')
+@commands.has_role('Admin')
+async def ban(ctx, member:discord.User=None, reason =None):
+    if member == None or member == ctx.message.author:
+        await ctx.channel.send("You cannot ban yourself")
         return
-    await member.ban()
-    embed = discord.Embed(title='Member Banned', description='User banned: ' + str(member.mention))
-    await ctx.send(embed=embed)
-    await ctx.send(random.choice(bangifs))
+    if reason == None:
+        reason = "For being a jerk!"
+    message = f"You have been banned from {ctx.guild.name} for {reason}"
+    await member.send(message)
+    # await ctx.guild.ban(member, reason=reason)
+    await ctx.channel.send(f"{member} is banned!")
+
+@bot.command()
+@commands.has_role('moderator')
+async def kban(ctx, member:discord.User=None, reason =None):
+    if member == None or member == ctx.message.author:
+        await ctx.channel.send("You cannot ban yourself")
+        return
+    if reason == None:
+        reason = "For being a jerk!"
+    message = f"You have been banned from {ctx.guild.name} for {reason}"
+    await member.send(message)
+    await ctx.guild.ban(member, reason=reason, delete_message_days=0)
+    await ctx.channel.send(f"{member} is banned!")
 
 @bot.command()
 @commands.has_permissions(administrator=True)
@@ -192,7 +232,7 @@ async def sayas(ctx):
     username = user.name
     msg = ctx.message.content.split()
     tosend = ' '.join(msg[2::])
-    cmd = 'curl -d "username={}&content={}&avatar_url={}" -X POST webhookurl'.format(username,tosend, pfp)
+    cmd = 'curl -d "username={}&content={}&avatar_url={}" -X POST https://discordapp.com/api/webhooks/{redacted}'.format(username,tosend, pfp)
     os.system(cmd)
     await ctx.message.delete()
 
@@ -231,11 +271,11 @@ async def server_info(ctx):
                                                                             Created At = {}\n
                                                                             Server ID = {}
                                                                             '''.format(vc_cnt, txt_cnt, mem_cnt, role_cnt, creation, server_id))
-    embed.set_thumbnail(url=str(img))   
+    embed.set_thumbnail(url=str(img))
     await ctx.send(embed=embed)
 
 @bot.command(pass_context=True)
-@commands.has_role('Moderator')
+@commands.has_role('moderator')
 async def kick(ctx, member: discord.Member, *, reason=None):
     await member.kick(reason=reason)
     if reason == None:
@@ -249,16 +289,22 @@ async def kick(ctx, member: discord.Member, *, reason=None):
 async def testadmin(ctx):
     await ctx.send('Only people with admin should be able to run this ')
 
+
+@bot.command(pass_context=True)
+@commands.has_role('moderator')
+async def testmod(ctx):
+    await ctx.send('Only people with moderator should be able to run this ')
+
 @bot.command(pass_context=True)
 @commands.has_role('Beginner Mod')
 async def mute(ctx, member: discord.Member):
     role = get(ctx.guild.roles, name='Muted')
     if role is None:
         await ctx.send('Please create a Muted role')
-        return 
+        return
     if not member:
         await ctx.send('PLease specify a member to mute')
-        return  
+        return
     await member.add_roles(role)
     await ctx.send('{} has been muted'.format(member.mention))
 
@@ -273,8 +319,8 @@ async def unmute(ctx, member: discord.Member):
 @commands.has_role('Beginner Mod')
 async def clean(ctx, limit: int):
     await ctx.channel.purge(limit=limit)
-    await ctx.send(f'{ctx.author.mention} cleared {limit} messages')
-    
+    await ctx.send(f'{ctx.author.mention} cleared {limit} messages', delete_after=5)
+
 
 @bot.command(pass_context=True)
 async def peen_size(ctx, member: discord.Member = None):
@@ -294,36 +340,88 @@ async def peen_size(ctx, member: discord.Member = None):
 @bot.command(pass_context=True)
 async def snipe(ctx):
     global lastdel
+    global lastauth
     print(lastdel)
 
     if lastdel == None:
         await ctx.send('Couldnt find a last message')
     else:
-        embed = discord.Embed(title='SNIPER', description=f'Message sniped : {lastdel}\nMessage From : {lastauth}')
-        embed.set_thumbnail(url='https://i.ytimg.com/vi/3qA8lv4lmTE/hqdefault.jpg')
+        embed = discord.Embed(title='SNIPER', description=f'Message deleted : {lastdel}\nMessage From : {lastauth}')
+        embed.set_thumbnail(url='https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/c0/c0894fc6d432c0459255f580a842de5697e9f612_full.jpg')
         await ctx.send(embed=embed)
+
+@bot.command(pass_context=True)
+async def editsnipe(ctx):
+    global lastdel
+    global lastauth
+    print(lastdel)
+
+    if lasteditbef == None:
+        await ctx.send('Couldnt find a last edited message')
+    else:
+        embed = discord.Embed(title='SNIPER', description=f'Before edit sniper : {lasteditbef}\nAfter edit sniper: {lasteditto}\nMessage From : {editauth}')
+        embed.set_thumbnail(url='https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/c0/c0894fc6d432c0459255f580a842de5697e9f612_full.jpg')
+        await ctx.send(embed=embed)
+
+@bot.command(pass_context=True)
+async def lmgtfy(ctx):
+    tos = ctx.message.content.split()[1::]
+    link = f"https://lmgtfy.com/?q={'+'.join(tos)}"
+    await ctx.send(link)
 
 
 @bot.command(pass_context=True)
+async def cat(ctx):
+    apikey = 'apikey'
+    url_base = "https://api.thecatapi.com/v1/images/search?limit=1"
+    headers={"x-api-key": apikey}
+    async with aiohttp.ClientSession() as cs:
+        async with cs.get(url_base, headers=headers) as r:
+            res = await r.json()  # returns dict
+        e = discord.Embed(
+            description='Here is the cute cat!',
+        )
+        e.set_image(url=res[0]['url'])
+        await ctx.send(embed=e)
+
+@bot.command(pass_context=True)
+async def code(ctx):
+    await ctx.send('The code can be found here: https://github.com/cswil/server_bot/blob/master/main.py')
+
+@bot.command(pass_context=True)
 async def gethelp(ctx):
-    mod_embed = discord.Embed(title='Moderation commands', color=0x00ffcc)
-    mod_embed.add_field(name="Ban", value="*[Minimum role is Admin]* \nDesc: This command bans people \nUsage: `>ban @member`", inline=False)
-    mod_embed.add_field(name="Kick", value="*[Minumum role is Moderator]* \nDesc: This command kicks people\nUsage : `>kick @member`", inline=False)
-    mod_embed.add_field(name="Mute", value="*[Minimum Role is Beginner mod]*\nDesc: This command mutes people\nUsage : `>mute @member` ", inline=False)
-    mod_embed.add_field(name="Unmute", value="*[Minimum Role is Beginner mod]*\nDesc: This command unmutes people\nUsage : `>unmute @member` ", inline=False)
-    mod_embed.add_field(name="Clean", value="*[Minimum Role is Beginner mod]*\nDesc : This command deletes x messages\nUsage : `>clean x`", inline=False)   
-    fun_embed = discord.Embed(title='Fun commands', color=0xff00ff)
-    fun_embed.add_field(name='Thot Spot', value="Desc: This command detects thots and eliminates them\nUsage: `>thot_spotted @member`", inline=False)
-    fun_embed.add_field(name="Translate", value="Desc: Translates a message, with auto lang detection\nUsage: `>translate message to translate`", inline=False)
-    fun_embed.add_field(name='Say as', value="Desc: Say something as another user! (overuse will result in command stripped from you)\nUsage `>sayas @member to_say`", inline=False)
-    fun_embed.add_field(name="Belle Delphine Worship", value='Desc: Send a link of some top tier Belle Delphine images\nUsage: `>belle_delphine`', inline=False)
-    fun_embed.add_field(name="Periodic table of kink", value="Desc: Get the periodic table of the kink\nUsage: `>periodic_table`", inline=False)
-    info_embed = discord.Embed(title="Info Commands", color=0x99ffcc)
-    info_embed.add_field(name='Get Help', value='Desc: Show this message \nUsage: `>gethelp`', inline=False)
-    info_embed.add_field(name="Get Users",value='Desc: get the users of a specific role\nUsage `>getusers rolename`', inline=False)
-    info_embed.add_field(name='Member count', value='Desc: get server member count\nUsage: `>get_members`', inline=False)
-    info_embed.add_field(name='Server Info', value='Desc: get some info on the server\nUsage: `>server_info`', inline=False)
-    await ctx.send(embed=mod_embed)
-    await ctx.send(embed=fun_embed)
-    await ctx.send(embed=info_embed)
+    try:
+        todo = ctx.message.content.split()[1]
+    except:
+        what_embed = discord.Embed(title='What would you like help with?', description='please type `>gethelp` then one of the following categoried : \nMod\nFun\nInfo')
+        await ctx.send(embed=what_embed)
+    if todo.lower() == 'mod':
+        mod_embed = discord.Embed(title='Moderation commands', color=0x00ffcc)
+        mod_embed.add_field(name="Ban", value="*[Minimum role is Admin]* \nDesc: This command bans people \nUsage: `>ban @member`", inline=False)
+        mod_embed.add_field(name="Kick", value="*[Minumum role is Moderator]* \nDesc: This command kicks people\nUsage : `>kick @member`", inline=False)
+        mod_embed.add_field(name="Mute", value="*[Minimum Role is Beginner mod]*\nDesc: This command mutes people\nUsage : `>mute @member` ", inline=False)
+        mod_embed.add_field(name="Unmute", value="*[Minimum Role is Beginner mod]*\nDesc: This command unmutes people\nUsage : `>unmute @member` ", inline=False)
+        mod_embed.add_field(name="Clean", value="*[Minimum Role is Beginner mod]*\nDesc : This command deletes x messages\nUsage : `>clean x`", inline=False)
+        await ctx.send(embed=mod_embed)
+    elif todo.lower() == 'fun':
+        fun_embed = discord.Embed(title='Fun commands', color=0xff00ff)
+        fun_embed.add_field(name='Thot Spot', value="Desc: This command detects thots and eliminates them\nUsage: `>thot_spotted @member`", inline=False)
+        fun_embed.add_field(name="Translate", value="Desc: Translates a message, with auto lang detection\nUsage: `>translate message to translate`", inline=False)
+        fun_embed.add_field(name='Say as', value="Desc: Say something as another user! (overuse will result in command stripped from you)\nUsage `>sayas @member to_say`", inline=False)
+        fun_embed.add_field(name="Belle Delphine Worship", value='Desc: Send a link of some top tier Belle Delphine images\nUsage: `>belle_delphine`', inline=False)
+        fun_embed.add_field(name="Periodic table of kink", value="Desc: Get the periodic table of the kink\nUsage: `>periodic_table`", inline=False)
+        fun_embed.add_field(name="Cats!", value='Desc: Get random cat pics cos who doesnt love cats?\nUsage:`>cat`', inline=False)
+        fun_embed.add_field(name="SNIPERRRRRR", value='Desc: We now have an anime girl watching out for those pesky message deletes\nUsage: `>snipe`', inline=False)
+        fun_embed.add_field(name='Edit Sniperrrrrr', value='Desc: The same anime girl has upgraded to watching edits too\nUsage `>editsnipe`', inline=False)
+        await ctx.send(embed=fun_embed)
+    elif todo.lower() == 'info':
+        info_embed = discord.Embed(title="Info Commands", color=0x99ffcc)
+        info_embed.add_field(name='Get Help', value='Desc: Show this message \nUsage: `>gethelp`', inline=False)
+        info_embed.add_field(name="Get Users",value='Desc: get the users of a specific role\nUsage `>getusers rolename`', inline=False)
+        info_embed.add_field(name='Member count', value='Desc: get server member count\nUsage: `>get_members`', inline=False)
+        info_embed.add_field(name='Server Info', value='Desc: get some info on the server\nUsage: `>server_info`', inline=False)
+        await ctx.send(embed=info_embed)
+    else:
+        what_embed = discord.Embed(title='What would you like help with?', description='please type `>gethelp` then one of the following categoried : \nMod\nFun\nInfo')
+        await ctx.send(embed=what_embed)
 bot.run(config['token'])
