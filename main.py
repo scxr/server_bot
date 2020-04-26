@@ -158,29 +158,33 @@ async def hello_world(ctx):
 
 @bot.command()
 @commands.has_role('Admin')
-async def ban(ctx, member:discord.User=None, reason =None):
-    if member == None or member == ctx.message.author:
-        await ctx.channel.send("You cannot ban yourself")
+    bangifs = ['https://giphy.com/gifs/ban-banned-salt-bae-Vh2c84FAPVyvvjZJNM','https://giphy.com/gifs/trump-ban-LPHbzPcICc86EVte9C','https://giphy.com/gifs/hammer-super-mario-8-bit-qPD4yGsrc0pdm','https://giphy.com/gifs/H99r2HtnYs492','https://giphy.com/gifs/ban-HXcALJVPgaR4A','https://giphy.com/gifs/dvOwFmfbzmAsI9v2IV','https://giphy.com/gifs/ii-topic-diablo-1zFXgNa44Z904','https://giphy.com/gifs/CybZqG4etuZsA','https://giphy.com/gifs/banned-Qn0LMesNcMHKg']
+    if not member:
+        await ctx.send('Please specify a member to ban')
         return
     if reason == None:
-        reason = "For being a jerk!"
+        reason = 'for being a cuck'
     message = f"You have been banned from {ctx.guild.name} for {reason}"
     await member.send(message)
-    # await ctx.guild.ban(member, reason=reason)
-    await ctx.channel.send(f"{member} is banned!")
+    embed = discord.Embed(title='Member Banned', description='User banned: ' + str(member.mention))
+    await ctx.guild.ban(member, reason=reason)
+    await ctx.send(random.choice(bangifs))
 
 @bot.command()
 @commands.has_role('moderator')
 async def kban(ctx, member:discord.User=None, reason =None):
-    if member == None or member == ctx.message.author:
-        await ctx.channel.send("You cannot ban yourself")
+    bangifs = ['https://giphy.com/gifs/ban-banned-salt-bae-Vh2c84FAPVyvvjZJNM','https://giphy.com/gifs/trump-ban-LPHbzPcICc86EVte9C','https://giphy.com/gifs/hammer-super-mario-8-bit-qPD4yGsrc0pdm','https://giphy.com/gifs/H99r2HtnYs492','https://giphy.com/gifs/ban-HXcALJVPgaR4A','https://giphy.com/gifs/dvOwFmfbzmAsI9v2IV','https://giphy.com/gifs/ii-topic-diablo-1zFXgNa44Z904','https://giphy.com/gifs/CybZqG4etuZsA','https://giphy.com/gifs/banned-Qn0LMesNcMHKg']
+    if not member:
+        await ctx.send('Please specify a member to ban')
         return
     if reason == None:
-        reason = "For being a jerk!"
+        reason = 'for being a cuck'
     message = f"You have been banned from {ctx.guild.name} for {reason}"
     await member.send(message)
+    embed = discord.Embed(title='Member Banned', description='User banned: ' + str(member.mention))
     await ctx.guild.ban(member, reason=reason, delete_message_days=0)
-    await ctx.channel.send(f"{member} is banned!")
+    await ctx.send(random.choice(bangifs))
+
 
 @bot.command()
 @commands.has_permissions(administrator=True)
@@ -232,7 +236,7 @@ async def sayas(ctx):
     username = user.name
     msg = ctx.message.content.split()
     tosend = ' '.join(msg[2::])
-    cmd = 'curl -d "username={}&content={}&avatar_url={}" -X POST https://discordapp.com/api/webhooks/{redacted}'.format(username,tosend, pfp)
+    cmd = 'curl -d "username={}&content={}&avatar_url={}" -X POST https://discordapp.com/api/webhooks/700876797767712778/FT6Db6_B7ALqPgW3jg6-xPw__jZMIB1C-jzhqITbH_bh1rGGiJ1dtsRHjQ6Mr1Ththpz'.format(username,tosend, pfp)
     os.system(cmd)
     await ctx.message.delete()
 
@@ -244,7 +248,7 @@ async def get_members(ctx):
 
 @bot.command(pass_context=True)
 async def belle_delphine(ctx):
-    await ctx.send('Youre very motherfucking welcome : https://drive.google.com/drive/folders/1ickRX_UtJ9SqlwZiKFRGCCxNG3kEqY65?usp=sharing')
+    await ctx.send('Youre very motherfucking welcome : https://drive.google.com/drive/folders/1ickRX_UtJ9SqlwZiKFRGCCxNG3kEqY65usp=sharing')
 
 @bot.command()
 async def periodic_table(ctx):
@@ -372,8 +376,8 @@ async def lmgtfy(ctx):
 
 @bot.command(pass_context=True)
 async def cat(ctx):
-    apikey = 'apikey'
-    url_base = "https://api.thecatapi.com/v1/images/search?limit=1"
+    apikey = '581fe36b-adfc-4337-bd3a-1a2dfb297681'
+    url_base = "https://api.thecatapi.com/v1/images/searchlimit=1"
     headers={"x-api-key": apikey}
     async with aiohttp.ClientSession() as cs:
         async with cs.get(url_base, headers=headers) as r:
@@ -386,14 +390,14 @@ async def cat(ctx):
 
 @bot.command(pass_context=True)
 async def code(ctx):
-    await ctx.send('The code can be found here: https://github.com/cswil/server_bot/blob/master/main.py')
+    await ctx.send('The code can be found here: https://github.com/cswil/server_bot/blob/master/main.py give it a star uwu')
 
 @bot.command(pass_context=True)
 async def gethelp(ctx):
     try:
         todo = ctx.message.content.split()[1]
     except:
-        what_embed = discord.Embed(title='What would you like help with?', description='please type `>gethelp` then one of the following categoried : \nMod\nFun\nInfo')
+        what_embed = discord.Embed(title='What would you like help with', description='please type `>gethelp` then one of the following categoried : \nMod\nFun\nInfo')
         await ctx.send(embed=what_embed)
     if todo.lower() == 'mod':
         mod_embed = discord.Embed(title='Moderation commands', color=0x00ffcc)
@@ -410,7 +414,7 @@ async def gethelp(ctx):
         fun_embed.add_field(name='Say as', value="Desc: Say something as another user! (overuse will result in command stripped from you)\nUsage `>sayas @member to_say`", inline=False)
         fun_embed.add_field(name="Belle Delphine Worship", value='Desc: Send a link of some top tier Belle Delphine images\nUsage: `>belle_delphine`', inline=False)
         fun_embed.add_field(name="Periodic table of kink", value="Desc: Get the periodic table of the kink\nUsage: `>periodic_table`", inline=False)
-        fun_embed.add_field(name="Cats!", value='Desc: Get random cat pics cos who doesnt love cats?\nUsage:`>cat`', inline=False)
+        fun_embed.add_field(name="Cats!", value='Desc: Get random cat pics cos who doesnt love cats>\nUsage:`>cat`', inline=False)
         fun_embed.add_field(name="SNIPERRRRRR", value='Desc: We now have an anime girl watching out for those pesky message deletes\nUsage: `>snipe`', inline=False)
         fun_embed.add_field(name='Edit Sniperrrrrr', value='Desc: The same anime girl has upgraded to watching edits too\nUsage `>editsnipe`', inline=False)
         await ctx.send(embed=fun_embed)
